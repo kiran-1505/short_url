@@ -1,62 +1,60 @@
-from flask import Flask, render_template, request, redirect, url_for
-from flask_sqlalchemy import SQLAlchemy
-import string
+from flask import Flask, render_template, request, redirect, url_for, jsonify
+import json
+import os
 import random
+import string
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///urls.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-db = SQLAlchemy(app)
-class Urls(db.Model):
-    id_ = db.Column("id_",db.Integer, primary_key=True)
-    long = db.Column("long", db.String())
-    short = db.Column("short", db.String(4))
+def load_urls():
+    """Load URL mappings from JSON file."""
+    if os.path.exists('urls.json'):
+        with open('urls.json', 'r') as file:
+            try:
+                return json.load(file)
+            except json.JSONDecodeError:
+                # Handle the case where the JSON file is invalid or empty
+                return {}
+    else:
+        return {}
 
-with app.app_context():
-    db.metadata.create_all(bind=db.engine, checkfirst=True)
-def shorten_url():
-    letters = string.ascii_lowercase + string.ascii_uppercase
-    while True:
-        rand_letters = random.choices(letters, k=4)
-        rand_letters = "".join(rand_letters)
-        short_url = Urls.query.filter_by(short = rand_letters).first()
-        if not short_url:
-            return rand_letters
+def save_urls(urls):
+    """Save URL mappings to JSON file."""
+    try:
+        with open('urls.json', 'w') as file:
+            json.dump(urls, file)
+    except Exception as e:
+        # Handle the case where writing to the JSON file fails
+        print(f"Error saving URLs to JSON file: {e}")
 
-@app.route('/', methods=['POST', 'GET'])
+@app.route('/')
 def home():
-    if request.method == "POST":
-        url_received = request.form["nm"]
-        found_url = Urls.query.filter_by(long =url_received).first()
-        if found_url:
-            return redirect(url_for("display_short_url", url=found_url.short))
-        else:
-            short_url = shorten_url()
-            print(short_url)
-            new_url = Urls(url_received,short_url)
-            db.session.add(new_url)
-            db.session.commit()
-            return redirect(url_for("display_short_url", url=short_url))
+    return render_template('home.html')
+
+@app.route('/shorten', methods=['POST'])
+def shorten_url():
+    long_url = request.form.get('url')
+    urls = load_urls()
+
+    if long_url in urls:
+        short_url = urls[long_url]
     else:
-        return render_template("home.html")
+        short_url = generate_short_url()
+        urls[long_url] = short_url
+        save_urls(urls)
 
-@app.route('/<short_url>')
-def redirection(short_url):
-    long_url = Urls.query.filter_by(short=short_url).first()
-    if long_url:
-        return redirect(long_url.long)
-    else:
-        return f'<h1>Url doesnot exist</h1>'
+    return redirect(url_for('display_short_url', short_url=short_url))
 
-@app.route('/display/<url>')
-def display_short_url(url):
-    return render_template('shorturl.html', short_url_display = url)
+@app.route('/display/<short_url>')
+def display_short_url(short_url):
+    return render_template('shorturl.html', short_url_display=short_url)
 
-def display_all():
-    return render_template('all_urls.html', vals=Urls.query.all())
+def generate_short_url():
+    """Generate a random short URL with 'https://' prefix."""
+    short_url_length = 8
+    characters = string.ascii_letters + string.digits
+    short_url = ''.join(random.choice(characters) for _ in range(short_url_length))
+    return f'https://{short_url}'
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)
-
-This is the new version
