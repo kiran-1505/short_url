@@ -48,6 +48,7 @@ def shorten_url():
     """
     Let's a developer create a short url from a long one
     and if it already exists then just return
+    Input and output will be in JSON format
     """
     pass
 
@@ -56,6 +57,7 @@ def shorten_url():
 def get_long_url():
     """
     Let's a developer get the long url from a short one
+    Input and output will be in JSON format
     """
     pass
 
@@ -64,6 +66,7 @@ def get_long_url():
 def delete_url():
     """
     Let's a developer delete a url from the database
+    Input and output will be in JSON format
     """
     pass
 
