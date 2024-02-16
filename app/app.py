@@ -59,7 +59,7 @@ def shorten_url():
 def get_long_url():
     """
     Let's a developer get the long url from a short one
-    Input and output will be in JSON format
+    Input and output will be in JSON format.
     """
     pass
 
