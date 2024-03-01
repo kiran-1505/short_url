@@ -1,5 +1,0 @@
-curl -H 'content-type:application/json' -X POST -d '{"url": "http://mylongurl"}' http://localhost:5000/shorten_url
-
-curl -H 'content-type:application/json' http://localhost:5000/long_url?url=short_url
-
-curl -H 'content-type:application/json' -X DELETE http://localhost:5000/long_url?url=short_url
